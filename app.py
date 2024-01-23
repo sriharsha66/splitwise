@@ -17,15 +17,15 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USE_TLS'] = False
-app.config['MAIL_USERNAME'] = 'magnusharsha@gmail.com'  # Replace with your Gmail email
-app.config['MAIL_PASSWORD'] = 'loeg pdci scvs fyjl'  # Replace with your Gmail password
-app.config['MAIL_DEFAULT_SENDER'] = 'magnusharsha@gmail.com'  # Replace with your Gmail email
+app.config['MAIL_USERNAME'] = 'XXXXXXXX@gmail.com'  # Replace with your Gmail email
+app.config['MAIL_PASSWORD'] = 'XXXX XXXX XXXX XXXX'  # Replace with your Gmail password
+app.config['MAIL_DEFAULT_SENDER'] = 'XXXXXXXX@gmail.com'  # Replace with your Gmail email
 
 mail = Mail(app)   
 # MySQL database setup
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'StrongP@ssw0rd'
+app.config['MYSQL_PASSWORD'] = 'SXXXXXXXd'
 app.config['MYSQL_DB'] = 'expense_app'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
