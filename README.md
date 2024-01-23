@@ -28,6 +28,7 @@ The Expense Sharing Application allows users to manage shared expenses among a g
 
 - The application uses MySQL as the database.
 - Database connection details are specified in `db_config` within the code.
+- Need to create a DB with specfic name.
 
 ## Installation and Setup
 
@@ -63,3 +64,4 @@ Optional Query Parameter: simplify (true/false)
 API responses should take less than 50 milliseconds.
 Maximum 1000 participants per expense.
 Maximum expense amount: INR 1,00,00,000.
+
