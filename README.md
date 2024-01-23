@@ -43,9 +43,11 @@ The Expense Sharing Application allows users to manage shared expenses among a g
 
 # Run the Application
 
-1. python app.py (for Linux perfer to use python3 app.py)
+1. Create a conda env to run the code without conflicts.
 
-2. Access the application at http://127.0.0.1:5000.
+2. python app.py (for Linux perfer to use python3 app.py)
+
+3. Access the application at http://127.0.0.1:5000.
 
 # API Endpoints
 
