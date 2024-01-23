@@ -94,60 +94,7 @@ def send_weekly_email():
     except Exception as e:
         with app.app_context():
             current_app.logger.error(f"Error sending weekly email: {str(e)}")
-# def send_weekly_email():
-#     try:
-#         with app.app_context():
-#             cur = mysql.connection.cursor()
-#             cur.execute('SELECT DISTINCT participant_id, share FROM participants')
-#             expenses_participant_data = cur.fetchall()
-#             cur.close()
 
-#             for participant_data in expenses_participant_data:
-#                 participant_id = participant_data['participant_id']
-
-#                 # Get all expenses for the participant
-#                 cur = mysql.connection.cursor()
-#                 query_expenses = '''
-#                     SELECT e.id, e.payer_id, e.total_amount, p.share
-#                     FROM expenses e
-#                     JOIN participants p ON e.id = p.expense_id
-#                     WHERE p.participant_id = %s
-#                 '''
-#                 cur.execute(query_expenses, (participant_id,))
-#                 participant_expenses = cur.fetchall()
-#                 cur.close()
-
-#                 total_expense = 0.0
-
-#                 # Calculate total expense and send email for each expense
-#                 for expense_data in participant_expenses:
-#                     expense_id = expense_data['id']
-#                     payer_id = expense_data['payer_id']
-#                     total_amount = expense_data['total_amount']
-#                     share = expense_data['share']
-
-#                     total_expense += round_decimal(float(share))
-#                     email_subject = f"Weekly Expense - Expense ID: {expense_id}"
-#                     email_body = f"Hello User {participant_id},\n\nExpense details:\n"\
-#                                  f"Expense ID: {expense_id}\n"\
-#                                  f"Payer ID: {payer_id}\n"\
-#                                  f"Total Amount: {total_amount}\n"\
-#                                  f"Your Share: {share}\n"
-#                     send_email_async(email_subject, [get_user_email(participant_id)], email_body)
-
-#                 # Calculate final profit or loss
-#                 # final_balance = total_expense - get_user_balance(participant_id)
-#                 # email_subject_final = "Weekly Expense Summary"
-#                 # email_body_final = f"Hello User {participant_id},\n\n"\
-#                 #                    f"Your final profit or loss for the week: {final_balance}"
-#                 # send_email_async(email_subject_final, [get_user_email(participant_id)], email_body_final)
-
-#     except Exception as e:
-#         with app.app_context():
-#             current_app.logger.error(f"Error sending weekly email: {str(e)}")
-
-
-# Function to get user email by user_id
 def get_user_email(user_id):
     try:
         cur = mysql.connection.cursor()
@@ -278,54 +225,6 @@ def add_expense():
     except Exception as e:
         return jsonify({'error': str(e)})
 
-
-# # API endpoint to get balances for a user
-# @app.route('/get_balances/<user_id>', methods=['GET'])
-# def get_balances(user_id):
-#     balances = defaultdict(float)
-
-#     try:
-#         # Calculate balances for expenses where the user is involved as a payer
-#         cur = mysql.connection.cursor()
-#         query_payer = '''
-#         SELECT e.payer_id, e.total_amount
-#         FROM expenses e
-#         WHERE e.payer_id = %s
-#         '''
-#         cur.execute(query_payer, (user_id,))
-#         expenses_payer_data = cur.fetchall()
-
-#         print(f"Debug - Payer Expenses: {expenses_payer_data}")
-
-#         for expense_data in expenses_payer_data:
-#             participant_id, amount = expense_data['payer_id'], expense_data['total_amount']
-#             balances[participant_id] += round_decimal(float(amount))
-
-#         # Calculate balances for expenses where the user is involved as a participant
-#         query_participant = '''
-#         SELECT p.participant_id, p.share
-#         FROM participants p
-#         JOIN expenses e ON p.expense_id = e.id
-#         WHERE p.participant_id = %s
-#         '''
-#         cur.execute(query_participant, (user_id,))
-#         expenses_participant_data = cur.fetchall()
-
-#         print(f"Debug - Participant Expenses: {expenses_participant_data}")
-
-#         for expense_data in expenses_participant_data:
-#             participant_id, share = expense_data['participant_id'], expense_data['share']
-#             balances[participant_id] -= round_decimal(float(share))
-
-#     except Exception as e:
-#         return jsonify({'error': str(e)})
-
-#     finally:
-#         cur.close()
-
-#     print(f"Debug - Final Balances: {dict(balances)}")
-
-#     return jsonify(dict(balances))
 
 # API endpoint to get balances for a user with history
 @app.route('/get_balances/<user_id>', methods=['GET'])
