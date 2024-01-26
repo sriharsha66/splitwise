@@ -17,15 +17,15 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USE_TLS'] = False
-app.config['MAIL_USERNAME'] = 'XXXXXXXX@gmail.com'  # Replace with your Gmail email
-app.config['MAIL_PASSWORD'] = 'XXXX XXXX XXXX XXXX'  # Replace with your Gmail password
-app.config['MAIL_DEFAULT_SENDER'] = 'XXXXXXXX@gmail.com'  # Replace with your Gmail email
+app.config['MAIL_USERNAME'] = 'm@gmail.com'  # Replace with your Gmail email
+app.config['MAIL_PASSWORD'] = 'XXXXXXXX'  # Replace with your Gmail password
+app.config['MAIL_DEFAULT_SENDER'] = 'm@gmail.com'  # Replace with your Gmail email
 
 mail = Mail(app)   
 # MySQL database setup
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'SXXXXXXXd'
+app.config['MYSQL_PASSWORD'] = 'XXX@XXX'
 app.config['MYSQL_DB'] = 'expense_app'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
@@ -132,7 +132,7 @@ def get_user_balance(user_id):
     
 # Scheduler setup
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=send_weekly_email, trigger="interval", minutes=5)
+scheduler.add_job(func=send_weekly_email, trigger="interval", minutes=5) # here change then time as per our requirement
 scheduler.start()
 
 def send_email_async(subject, recipients, body):
@@ -183,6 +183,8 @@ def add_user():
 
 
 
+
+
 # API endpoint to add an expense
 @app.route('/add_expense', methods=['POST'])
 def add_expense():
@@ -217,58 +219,72 @@ def add_expense():
         for participant_id, share in participants.items():
             cur.execute('INSERT INTO participants (expense_id, participant_id, share) VALUES (%s, %s, %s)',
                         (expense_id, participant_id, share))
+            
+            # Get participant's email address (replace 'email' with the actual column name)
+            cur.execute('SELECT email FROM users WHERE user_id = %s', (participant_id,))
+            participant_email = cur.fetchone()['email']
+
+            # Send email to participants
+            send_expense_notification(participant_email, total_amount, share)
+
         mysql.connection.commit()
 
         cur.close()
-         # TODO: Send asynchronous email to participants
+
         return jsonify({'message': 'Expense added successfully'})
     except Exception as e:
         return jsonify({'error': str(e)})
 
+# Helper function to send expense notification email
+def send_expense_notification(recipient_email, total_amount, share):
+    try:
+        subject = "Expense Notification"
+        body = f"You have been added to an expense. You owe {share} for a total amount of {total_amount}."
+        msg = Message(subject, recipients=[recipient_email])
+        msg.body = body
+        mail.send(msg)
+    except Exception as e:
+        current_app.logger.error(f"Error sending expense notification email: {str(e)}")
 
-# API endpoint to get balances for a user with history
+
+
+# API endpoint to get balances for a user
 @app.route('/get_balances/<user_id>', methods=['GET'])
 def get_balances(user_id):
     balances = defaultdict(float)
-    one_to_one_history = []
 
     try:
-        # Calculate balances for expenses where the user is involved as a payer or participant
+        # Calculate balances for expenses where the user is involved as a payer
         cur = mysql.connection.cursor()
-
-        # Payer balances
         query_payer = '''
-            SELECT e.payer_id, e.total_amount
-            FROM expenses e
-            WHERE e.payer_id = %s
+        SELECT e.payer_id, e.total_amount
+        FROM expenses e
+        WHERE e.payer_id = %s
         '''
         cur.execute(query_payer, (user_id,))
         expenses_payer_data = cur.fetchall()
 
-        for expense_data in expenses_payer_data:
-            payer_id, amount = expense_data['payer_id'], expense_data['total_amount']
-            balances[payer_id] += round_decimal(float(amount))
-            one_to_one_history.append({'from': user_id, 'to': payer_id, 'amount': round_decimal(float(amount))})
+        print(f"Debug - Payer Expenses: {expenses_payer_data}")
 
-        # Participant balances
+        for expense_data in expenses_payer_data:
+            participant_id, amount = expense_data['payer_id'], expense_data['total_amount']
+            balances[participant_id] += round_decimal(float(amount))
+
+        # Calculate balances for expenses where the user is involved as a participant
         query_participant = '''
-            SELECT p.participant_id, e.payer_id, e.total_amount, p.share
-            FROM participants p
-            JOIN expenses e ON p.expense_id = e.id
-            WHERE p.participant_id = %s
+        SELECT p.participant_id, p.share
+        FROM participants p
+        JOIN expenses e ON p.expense_id = e.id
+        WHERE p.participant_id = %s
         '''
         cur.execute(query_participant, (user_id,))
         expenses_participant_data = cur.fetchall()
 
-        for expense_data in expenses_participant_data:
-            participant_id = expense_data['participant_id']
-            payer_id = expense_data['payer_id']
-            total_amount = expense_data['total_amount']
-            share = expense_data['share']
+        print(f"Debug - Participant Expenses: {expenses_participant_data}")
 
-            # Update balances and history
-            balances[payer_id] -= round_decimal(float(share))
-            one_to_one_history.append({'from': participant_id, 'to': payer_id, 'amount': round_decimal(float(share))})
+        for expense_data in expenses_participant_data:
+            participant_id, share = expense_data['participant_id'], expense_data['share']
+            balances[participant_id] -= round_decimal(float(share))
 
     except Exception as e:
         return jsonify({'error': str(e)})
@@ -276,14 +292,10 @@ def get_balances(user_id):
     finally:
         cur.close()
 
-    # Filter balances to include only non-zero balances
-    non_zero_balances = {k: v for k, v in balances.items() if v != 0.0}
+    print(f"Debug - Final Balances: {dict(balances)}")
 
-    return jsonify({
-        'user_id': user_id,
-        'balances': non_zero_balances,
-        'one_to_one_history': one_to_one_history
-    })
+    return jsonify(dict(balances))
+
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
